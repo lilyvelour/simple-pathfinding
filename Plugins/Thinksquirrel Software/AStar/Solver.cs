@@ -31,7 +31,6 @@ namespace ThinksquirrelSoftware.AStar
 		// Returns null if no solution found.
 		// TODO: Use builtin arrays? Will increase speed, and sacrifice readability
 		public NodeList<TValue> Solve(
-			Graph<TValue> graph, 
 			Node<TValue> start,
 			Node<TValue> goal)
 		{
