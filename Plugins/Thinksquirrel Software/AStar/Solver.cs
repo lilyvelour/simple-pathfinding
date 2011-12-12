@@ -1,5 +1,4 @@
-/// Simple A* Algorithm by Josh Montoute
-/// For COSC 4322
+/// A* Pathfinding - Solver base class
 /// Copyright (c) 2011 Thinksquirrel Software, LLC
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining
@@ -18,137 +17,109 @@
 /// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
 /// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 /// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-using UnityEngine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace ThinksquirrelSoftware.AStar
 {
-	public abstract class Solver<TValue>
-		where TValue : struct
+	public class Solver<T>
 	{
+		// The heuristic function to use.
+		private Heuristic<T> mHeuristic;
+		
+		public Heuristic<T> HeuristicFunction
+		{
+			get
+			{
+				return mHeuristic;
+			}
+			set
+			{
+				mHeuristic = value;
+			}
+		}
+		
+		public Solver(Heuristic<T> heuristic)
+		{
+			this.mHeuristic = heuristic;
+		}
+		
 		// Returns a list of nodes, representing a path from beginning to end.
 		// Returns null if no solution found.
-		// TODO: Use builtin arrays? Will increase speed, and sacrifice readability
-		public NodeList<TValue> Solve(
-			Node<TValue> start,
-			Node<TValue> goal)
+		public Path<T> Solve(
+			Node<T> start,
+			Node<T> goal)
 		{
 			
-			NodeList<TValue> closedSet = new NodeList<TValue>();
-			
-			NodeList<TValue> openSet = new NodeList<TValue>();
-			openSet.Add(start);
-			
-			NodeList<TValue> traversedSet = new NodeList<TValue>();
-			
-			Node<TValue> lastNode = start;
-			
 			float g = 0;
-			float h = Heuristic(start, goal);
+			float h = HeuristicFunction.Run(start, goal);
 			float f = g + h;
+			
+			BinaryHeap<Node<T>> openSet = new BinaryHeap<Node<T>>();
+			NodeList<T> closedSet = new NodeList<T>();
+			Path<T> path = new Path<T>(goal);
+			
+			openSet.Insert(f, start);
 			
 			while (openSet.Count > 0)
 			{	
-				// Grab the lowest cost node in the open set
-				Node<TValue> currentNode = openSet[0];
-				
-				if (openSet.Count > 1)
+				// If the current node is the goal, finish early
+				if (openSet.Peek() == goal)
 				{
-					for (int i = 0; i < openSet.Count; i++)
-					{
-						if (g + Heuristic(openSet[i], goal) < g + Heuristic(lastNode, goal))
-						{
-							currentNode = openSet[i];
-						}
-					}
+					return path;
 				}
+				
+				// Grab the lowest cost node in the open set
+				Node<T> currentNode = openSet.RemoveRoot();
 				
 				// Move the current node to the closed set
-				openSet.Remove(currentNode);
 				closedSet.Add(currentNode);
-				
-				// If the current node is the goal, finish early
-				if (currentNode == goal)
-				{
-					traversedSet.Add(currentNode);
-					return traversedSet;
-				}
-				
-				// True if a neighbor is opened
-				bool good = false;
-				
+								
 				// Open all of the neighbors of the current node
 				for(int i = 0; i < currentNode.Neighbors.Count; i++)
 				{
-					// Skip this node if it's already been visited
-					if (closedSet.Contains(currentNode.Neighbors[i]))
-						continue;
-						
-					float g_Cost = g + currentNode.Costs[i];
-					bool goodEstimate = false;
+					// Neighbor node
+					Node<T> neighbor = currentNode.Neighbors[i];
+					// Movement cost from currentNode
+					float movementCost = currentNode.Costs[i];
 					
-					if (g_Cost <= f)
+					// The cost to traverse to the current neighbor from the start
+					float g_Neighbor = g + movementCost;
+					float h_Neighbor = HeuristicFunction.Run(neighbor, goal);
+					float f_Neighbor = g_Neighbor + h_Neighbor;
+					
+					// If neighbor is already scheduled to be opened
+					if (openSet.Contains(neighbor))
 					{
-						goodEstimate = true;
-						good = true;
+							continue;
+					}
+					
+					// If this node has already been visited
+					if (closedSet.Contains(neighbor))
+						continue;
+					
+					// Add the neighbor to the open set (sorted)
+					if (!openSet.Contains(neighbor))
+					{
+						openSet.Insert(f_Neighbor, neighbor);
+					}
+					
+					if (!path.Contains(neighbor))
+					{
+						path.Add(neighbor, currentNode);
 					}
 					else
 					{
-						goodEstimate = false;
-						
-						if (traversedSet.Contains(currentNode.Neighbors[i]))
-							traversedSet.Remove(currentNode.Neighbors[i]);
+						path.SetParent(neighbor, currentNode);
 					}
-					
-					// Add the neighbor to the open set
-					if (!openSet.Contains(currentNode.Neighbors[i]))
-					{
-						openSet.Add(currentNode.Neighbors[i]);
-					}
-					
-					if (goodEstimate)
-					{		
-						lastNode = currentNode;
-						g = g_Cost;
-						h = Heuristic(currentNode.Neighbors[i], goal);
-						f = g + h;
-					}
-				}
-				
-				// If no good estimates, remove the node from the traversed set ('dead ended')
-				if (good)
-				{
-					// Add the current node to the traversed set
-					if (!traversedSet.Contains(currentNode))
-						traversedSet.Add(currentNode);
-				}
-				else
-				{
-					if (traversedSet.Contains(currentNode))
-						traversedSet.Remove(currentNode);
+					g = g_Neighbor;
+					h = h_Neighbor;
+					f = f_Neighbor;
 				}
 			}
 			
 			return null;
-		}
-		
-		protected abstract float Heuristic(Node<TValue> start, Node<TValue> goal);
-	}
-	
-	public class Vector2Solver : Solver<Vector2>
-	{
-		protected override float Heuristic(Node<Vector2> start, Node<Vector2> goal)
-		{
-			return Vector2.Distance(start.Value, goal.Value);
-		}
-	}
-	
-	public class Vector3Solver : Solver<Vector3>
-	{
-		protected override float Heuristic(Node<Vector3> start, Node<Vector3> goal)
-		{
-			return Vector3.Distance(start.Value, goal.Value);
 		}
 	}
 }

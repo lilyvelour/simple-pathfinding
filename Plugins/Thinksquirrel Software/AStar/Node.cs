@@ -1,5 +1,4 @@
-/// Graph node classes for A* Pathfinding by Josh Montoute
-/// For COSC 4322
+/// A* Pathfinding - Graph node classes
 /// Copyright (c) 2011 Thinksquirrel Software, LLC
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining
@@ -18,7 +17,6 @@
 /// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
 /// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 /// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
@@ -26,19 +24,18 @@ using System.Collections.Generic;
 
 namespace ThinksquirrelSoftware.AStar
 {
-	public class Node<TValue>
-		where TValue : struct
+	public class Node<T>
 	{
-		private NodeList<TValue> mNeighbors;
+		private NodeList<T> mNeighbors;
 		private List<float> mCosts;
-		private TValue mValue;
+		private T mValue;
 		
-		public NodeList<TValue> Neighbors
+		public NodeList<T> Neighbors
 		{
 			get
 			{
 				if (mNeighbors == null)
-					mNeighbors = new NodeList<TValue>();
+					mNeighbors = new NodeList<T>();
 					
 				return mNeighbors;
 			}
@@ -54,7 +51,7 @@ namespace ThinksquirrelSoftware.AStar
 				return mCosts;
 			}
 		}
-		public TValue Value
+		public T Value
 		{
 			get
 			{
@@ -67,28 +64,27 @@ namespace ThinksquirrelSoftware.AStar
 		}
 		
 		public Node() {}
-		public Node(TValue value) : this(value, null) {}
-		public Node(TValue value, NodeList<TValue> neighbors)
+		public Node(T value) : this(value, null) {}
+		public Node(T value, NodeList<T> neighbors)
 		{
 		   this.mValue = value;
            this.mNeighbors = neighbors;
 		}
 	}
 	
-	public class NodeList<TValue> : List<Node<TValue>>
-		where TValue : struct
+	public class NodeList<T> : List<Node<T>>
 	{
 	    public NodeList() : base() { }
 
 	    public NodeList(int initialSize)
 	    {
 	        for (int i = 0; i < initialSize; i++)
-	            base.Add(default(Node<TValue>));
+	            base.Add(default(Node<T>));
 	    }
 
-	    public Node<TValue> FindByValue(TValue value)
+	    public Node<T> FindByValue(T value)
 	    {
-	        foreach (Node<TValue> node in this)
+	        foreach (Node<T> node in this)
 	            if (node.Value.Equals(value))
 	                return node;
 
@@ -96,31 +92,30 @@ namespace ThinksquirrelSoftware.AStar
 	    }
 	}
 	
-	public class Graph<TValue> : IEnumerable<TValue>
-		where TValue : struct
+	public class Graph<T> : IEnumerable<T>
 	{
-	    private NodeList<TValue> nodeSet;
+	    private NodeList<T> nodeSet;
 
 	    public Graph() : this(null) {}
-	    public Graph(NodeList<TValue> nodeSet)
+	    public Graph(NodeList<T> nodeSet)
 	    {
 	        if (nodeSet == null)
-	            this.nodeSet = new NodeList<TValue>();
+	            this.nodeSet = new NodeList<T>();
 	        else
 	            this.nodeSet = nodeSet;
 	    }
 
-	    public void AddNode(Node<TValue> node)
+	    public void AddNode(Node<T> node)
 	    {
 	        nodeSet.Add(node);
 	    }
 
-	    public void AddNode(TValue value)
+	    public void AddNode(T value)
 	    {
-	        nodeSet.Add(new Node<TValue>(value));
+	        nodeSet.Add(new Node<T>(value));
 	    }
 
-	    public bool AddDirectedEdge(Node<TValue> from, Node<TValue> to, float cost)
+	    public bool AddDirectedEdge(Node<T> from, Node<T> to, float cost)
 	    {
 			if (!from.Neighbors.Contains(to))
 			{
@@ -132,7 +127,7 @@ namespace ThinksquirrelSoftware.AStar
 			return false;
 	    }
 
-	    public bool AddUndirectedEdge(Node<TValue> from, Node<TValue> to, float cost)
+	    public bool AddUndirectedEdge(Node<T> from, Node<T> to, float cost)
 	    {
 
 			if (!from.Neighbors.Contains(to) && !to.Neighbors.Contains(from))
@@ -148,21 +143,21 @@ namespace ThinksquirrelSoftware.AStar
 			return false;
 	    }
 
-	    public bool Contains(TValue value)
+	    public bool Contains(T value)
 	    {
 	        return nodeSet.FindByValue(value) != null;
 	    }
 
-	    public bool Remove(TValue value)
+	    public bool Remove(T value)
 	    {
-	        Node<TValue> nodeToRemove = (Node<TValue>) nodeSet.FindByValue(value);
+	        Node<T> nodeToRemove = (Node<T>) nodeSet.FindByValue(value);
 	        
 			if (nodeToRemove == null)
 	            return false;
 
 	        nodeSet.Remove(nodeToRemove);
 
-	        foreach (Node<TValue> node in nodeSet)
+	        foreach (Node<T> node in nodeSet)
 	        {
 	            int index = node.Neighbors.IndexOf(nodeToRemove);
 	
@@ -176,7 +171,7 @@ namespace ThinksquirrelSoftware.AStar
 	        return true;
 	    }
 
-	    public NodeList<TValue> Nodes
+	    public NodeList<T> Nodes
 	    {
 	        get
 	        {
@@ -184,7 +179,7 @@ namespace ThinksquirrelSoftware.AStar
 	        }
 	    }
 	
-	    public Node<TValue> this[int i]
+	    public Node<T> this[int i]
 	    {
 	        get
 	        {
@@ -201,9 +196,9 @@ namespace ThinksquirrelSoftware.AStar
 	        get { return nodeSet.Count; }
 	    }
 	
-		IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
+		IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		{
-		    return (IEnumerator<TValue>)nodeSet;			  
+		    return (IEnumerator<T>)nodeSet;			  
 		}
 		
 		IEnumerator IEnumerable.GetEnumerator()
