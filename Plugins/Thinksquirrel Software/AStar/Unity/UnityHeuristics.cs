@@ -27,84 +27,89 @@ namespace ThinksquirrelSoftware.AStar.Unity
 {
 	public class ManhattanHeuristicV2 : Heuristic<Vector2>
 	{	
-		public ManhattanHeuristicV2(float scale, float alpha) : base(scale, alpha) {}
+		public ManhattanHeuristicV2(float scale, float alpha, float mod) : base(scale, alpha, mod) {}
 		
 		public override float Run(Node<Vector2> node, Node<Vector2> goal)
 		{
 			// Manhattan distance (Vector2)
 			return
-				Scale * Alpha * 
+				(Scale * Alpha * 
 				(Mathf.Abs(node.Value.x-goal.Value.x) 
-				+ Mathf.Abs(node.Value.y-goal.Value.y));		
+				+ Mathf.Abs(node.Value.y-goal.Value.y)))
+				+ Mod;		
 		}
 	}
 	
 	public class ManhattanHeuristicV3 : Heuristic<Vector3>
 	{
-		public ManhattanHeuristicV3(float scale, float alpha) : base(scale, alpha) {}
+		public ManhattanHeuristicV3(float scale, float alpha, float mod) : base(scale, alpha, mod) {}
 	
 		public override float Run(Node<Vector3> node, Node<Vector3> goal)
 		{
 			// Manhattan distance (Vector3)
 			return
-				Scale * Alpha *
+				(Scale * Alpha *
 				(Mathf.Abs(node.Value.x-goal.Value.x) 
 				+ Mathf.Abs(node.Value.y-goal.Value.y)
-				+ Mathf.Abs(node.Value.z-goal.Value.z));			
+				+ Mathf.Abs(node.Value.z-goal.Value.z))) + Mod;			
 		}
 	}
 	
 	public class ChebyshevHeuristicV2 : Heuristic<Vector2>
 	{
-		public ChebyshevHeuristicV2(float scale, float alpha) : base(scale, alpha) {}
+		public ChebyshevHeuristicV2(float scale, float alpha, float mod) : base(scale, alpha, mod) {}
 		
 		public override float Run(Node<Vector2> node, Node<Vector2> goal)
 		{
 			// Chebyshev distance (Vector2)
 			return
-				Scale * Alpha *
-				Mathf.Max(Mathf.Abs(node.Value.x-goal.Value.x), Mathf.Abs(node.Value.y-goal.Value.y));
+				(Scale * Alpha *
+				Mathf.Max(Mathf.Abs(node.Value.x-goal.Value.x), Mathf.Abs(node.Value.y-goal.Value.y)))
+				+ Mod;
 		}
 	}
 	
 	public class ChebyshevHeuristicV3 : Heuristic<Vector3>
 	{
-		public ChebyshevHeuristicV3(float scale, float alpha) : base(scale, alpha) {}
+		public ChebyshevHeuristicV3(float scale, float alpha, float mod) : base(scale, alpha, mod) {}
 		
 		public override float Run(Node<Vector3> node, Node<Vector3> goal)
 		{
 			// Chebyshev distance (Vector3)
 			return
-				Scale * Alpha *
+				(Scale * Alpha *
 				Mathf.Max(
 				Mathf.Max(Mathf.Abs(node.Value.x-goal.Value.x), Mathf.Abs(node.Value.y-goal.Value.y)),
-				Mathf.Abs(node.Value.y-goal.Value.z));	
+				Mathf.Abs(node.Value.y-goal.Value.z)))
+				+ Mod;	
 		}
 	}
 	
 	public class EuclideanHeuristicV2 : Heuristic<Vector2>
 	{
-		public EuclideanHeuristicV2(float scale, float alpha) : base(scale, alpha) {}	
+		public EuclideanHeuristicV2(float scale, float alpha, float mod) : base(scale, alpha, mod) {}	
 		
 		public override float Run(Node<Vector2> node, Node<Vector2> goal)
 		{
 			// Euclidean distance (Vector2)
 			return
-				Scale * Alpha * 
-				Vector2.Distance(node.Value, goal.Value);
+				(Scale * Alpha * 
+				Vector2.Distance(node.Value, goal.Value))
+				+ Mod;
 		}
 	}
 	
 	public class EuclideanHeuristicV3 : Heuristic<Vector3>
 	{
-		public EuclideanHeuristicV3(float scale, float alpha) : base(scale, alpha) {}	
+		public EuclideanHeuristicV3(float scale, float alpha, float mod) : base(scale, alpha, mod) {}	
 		
 		public override float Run(Node<Vector3> node, Node<Vector3> goal)
 		{
 			// Euclidean distance (Vector2)
 			return
-				Scale * Alpha * 
-				Vector3.Distance(node.Value, goal.Value);
+				(Scale * Alpha * 
+				Vector3.Distance(node.Value, goal.Value))
+				+ Mod;
 		}
 	}
 }

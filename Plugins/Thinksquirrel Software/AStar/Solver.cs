@@ -25,6 +25,15 @@ namespace ThinksquirrelSoftware.AStar
 {
 	public class Solver<T>
 	{
+		// Variables for the solver.
+		protected BinaryHeap<Node<T>> openSet;
+		protected HashSet<Node<T>> closedSet;
+		protected Path<T> path;
+		protected Node<T> currentNode;		
+		
+		// The IEqualityComparer to use
+		protected IEqualityComparer<Node<T>> comparer = EqualityComparer<Node<T>>.Default;
+		
 		// The heuristic function to use.
 		private Heuristic<T> mHeuristic;
 		
@@ -43,6 +52,9 @@ namespace ThinksquirrelSoftware.AStar
 		public Solver(Heuristic<T> heuristic)
 		{
 			this.mHeuristic = heuristic;
+			openSet = new BinaryHeap<Node<T>>(comparer);
+			closedSet = new HashSet<Node<T>>(comparer);
+			path = new Path<T>();
 		}
 		
 		// Returns a list of nodes, representing a path from beginning to end.
@@ -51,14 +63,21 @@ namespace ThinksquirrelSoftware.AStar
 			Node<T> start,
 			Node<T> goal)
 		{
+			// If start is null or goal is null, return with failure
+			if (start == null || goal == null)
+			{
+				return null;
+			}
 			
 			float g = 0;
-			float h = HeuristicFunction.Run(start, goal);
+			float h = DoHeuristic(start, goal);
 			float f = g + h;
-			
-			BinaryHeap<Node<T>> openSet = new BinaryHeap<Node<T>>();
-			NodeList<T> closedSet = new NodeList<T>();
-			Path<T> path = new Path<T>(goal);
+			int c = 0;
+			openSet.Clear();
+			closedSet.Clear();
+			path.Clear();
+			path.Goal = goal;
+			currentNode = null;
 			
 			openSet.Insert(f, start);
 			
@@ -71,7 +90,7 @@ namespace ThinksquirrelSoftware.AStar
 				}
 				
 				// Grab the lowest cost node in the open set
-				Node<T> currentNode = openSet.RemoveRoot();
+				currentNode = openSet.RemoveRoot();
 				
 				// Move the current node to the closed set
 				closedSet.Add(currentNode);
@@ -81,30 +100,31 @@ namespace ThinksquirrelSoftware.AStar
 				{
 					// Neighbor node
 					Node<T> neighbor = currentNode.Neighbors[i];
+					
+					// If neighbor is not enabled and it is close to the start of the path, continue
+					if (!neighbor.Enabled && c < 20)
+						continue;
+						
+					// If neighbor is already scheduled to be opened
+					if (openSet.Contains(neighbor))
+						continue;
+					
+					// If this neighbor has already been visited or is not enabled
+					if (closedSet.Contains(neighbor))
+						continue;
+						
 					// Movement cost from currentNode
 					float movementCost = currentNode.Costs[i];
 					
 					// The cost to traverse to the current neighbor from the start
 					float g_Neighbor = g + movementCost;
-					float h_Neighbor = HeuristicFunction.Run(neighbor, goal);
+					float h_Neighbor = DoHeuristic(neighbor, goal);
 					float f_Neighbor = g_Neighbor + h_Neighbor;
 					
-					// If neighbor is already scheduled to be opened
-					if (openSet.Contains(neighbor))
-					{
-							continue;
-					}
-					
-					// If this node has already been visited
-					if (closedSet.Contains(neighbor))
-						continue;
-					
 					// Add the neighbor to the open set (sorted)
-					if (!openSet.Contains(neighbor))
-					{
-						openSet.Insert(f_Neighbor, neighbor);
-					}
+					openSet.Insert(f_Neighbor, neighbor);
 					
+					// Add or update the neighbor on the path
 					if (!path.Contains(neighbor))
 					{
 						path.Add(neighbor, currentNode);
@@ -117,9 +137,17 @@ namespace ThinksquirrelSoftware.AStar
 					h = h_Neighbor;
 					f = f_Neighbor;
 				}
+				
+				c++;
 			}
 			
 			return null;
+		}
+		
+			
+		protected virtual float DoHeuristic(Node<T> node, Node<T> goal)
+		{
+			return HeuristicFunction.Run(node, goal);
 		}
 	}
 }

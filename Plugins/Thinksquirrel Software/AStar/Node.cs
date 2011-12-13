@@ -26,10 +26,18 @@ namespace ThinksquirrelSoftware.AStar
 {
 	public class Node<T>
 	{
+		private bool mEnabled = true;
 		private NodeList<T> mNeighbors;
 		private List<float> mCosts;
 		private T mValue;
 		
+		public bool Enabled
+		{
+			get
+			{
+				return mEnabled;
+			}
+		}
 		public NodeList<T> Neighbors
 		{
 			get
@@ -64,12 +72,21 @@ namespace ThinksquirrelSoftware.AStar
 		}
 		
 		public Node() {}
-		public Node(T value) : this(value, null) {}
-		public Node(T value, NodeList<T> neighbors)
+		public Node(T value) : this(value, null, true) {}
+		public Node(T value, bool enabled) : this(value, null, enabled) {}
+		public Node(T value, NodeList<T> neighbors) : this(value, neighbors, true) {}
+		public Node(T value, NodeList<T> neighbors, bool enabled)
 		{
-		   this.mValue = value;
-           this.mNeighbors = neighbors;
+			this.mValue = value;
+			this.mNeighbors = neighbors;
+			this.mEnabled = enabled;
 		}
+		
+		public void Toggle(bool toggle)
+		{
+			mEnabled = toggle;
+		}
+		
 	}
 	
 	public class NodeList<T> : List<Node<T>>
@@ -94,6 +111,30 @@ namespace ThinksquirrelSoftware.AStar
 	
 	public class Graph<T> : IEnumerable<T>
 	{
+		private bool mChanged;
+		
+		public bool Changed
+		{
+			get
+			{
+				return mChanged;
+			}
+		}
+		public delegate void GraphChangeHandler();
+		public event GraphChangeHandler GraphChange;
+		
+		public void PushGraphChange()
+		{
+			if (mChanged)
+			{
+				if (GraphChange != null)
+				{
+					GraphChange();
+				}
+				mChanged = false;
+			}
+		}
+		
 	    private NodeList<T> nodeSet;
 
 	    public Graph() : this(null) {}
@@ -105,15 +146,36 @@ namespace ThinksquirrelSoftware.AStar
 	            this.nodeSet = nodeSet;
 	    }
 
-	    public void AddNode(Node<T> node)
+	    public Node<T> AddNode(Node<T> node)
 	    {
 	        nodeSet.Add(node);
+			mChanged = true;
+			return node;
 	    }
 
-	    public void AddNode(T value)
+	    public Node<T> AddNode(T value)
 	    {
-	        nodeSet.Add(new Node<T>(value));
+			Node<T> node = new Node<T>(value);
+	        nodeSet.Add(node);
+			mChanged = true;
+			return node;
 	    }
+		
+		
+		public void ToggleNode(Node<T> node)
+		{
+			node.Toggle(!node.Enabled);
+			mChanged = true;
+		}
+		
+		public void ToggleNode(Node<T> node, bool enabled)
+		{
+			if (node.Enabled != enabled)
+			{
+				node.Toggle(enabled);
+				mChanged = true;
+			}
+		}
 
 	    public bool AddDirectedEdge(Node<T> from, Node<T> to, float cost)
 	    {
@@ -121,6 +183,7 @@ namespace ThinksquirrelSoftware.AStar
 			{
 	        	from.Neighbors.Add(to);
 				from.Costs.Add(cost);
+				mChanged = true;
 				return true;
 			}
 			
@@ -129,7 +192,9 @@ namespace ThinksquirrelSoftware.AStar
 
 	    public bool AddUndirectedEdge(Node<T> from, Node<T> to, float cost)
 	    {
-
+			if (from == null || to == null)
+				return false;
+				
 			if (!from.Neighbors.Contains(to) && !to.Neighbors.Contains(from))
 			{
 	        	from.Neighbors.Add(to);
@@ -137,6 +202,7 @@ namespace ThinksquirrelSoftware.AStar
 	
 	        	to.Neighbors.Add(from);
 	        	to.Costs.Add(cost);
+				mChanged = true;
 				return true;
 			}
 			
@@ -147,6 +213,11 @@ namespace ThinksquirrelSoftware.AStar
 	    {
 	        return nodeSet.FindByValue(value) != null;
 	    }
+	
+		public Node<T> Find(T value)
+		{
+			return nodeSet.FindByValue(value);
+		}
 
 	    public bool Remove(T value)
 	    {
@@ -154,7 +225,7 @@ namespace ThinksquirrelSoftware.AStar
 	        
 			if (nodeToRemove == null)
 	            return false;
-
+			
 	        nodeSet.Remove(nodeToRemove);
 
 	        foreach (Node<T> node in nodeSet)
@@ -167,7 +238,8 @@ namespace ThinksquirrelSoftware.AStar
 	                node.Costs.RemoveAt(index);
 	            }
 	        }
-
+			
+			mChanged = true;
 	        return true;
 	    }
 

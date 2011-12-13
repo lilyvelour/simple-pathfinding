@@ -1,4 +1,4 @@
-/// A* Pathfinding - Heuristic base class
+/// A* Pathfinding - Unity Agent (MonoBehaviour)
 /// Copyright (c) 2011 Thinksquirrel Software, LLC
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining
@@ -17,60 +17,40 @@
 /// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
 /// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 /// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+using UnityEngine;
+using ThinksquirrelSoftware.AStar;
 
-namespace ThinksquirrelSoftware.AStar
+namespace ThinksquirrelSoftware.AStar.Unity
 {
-	public abstract class Heuristic<T>
+	public abstract class Agent<T> : MonoBehaviour
 	{
-		private float mScale = 1;
-		private float mAlpha = 1;
-		private float mMod = 0;
+		protected Graph<T> nodeGraph;
+		protected Solver<T> solver;
+		protected Node<T> currentNode;
+		protected Node<T> goal;
+		protected Path<T> path;
+		protected NodeList<T> pathNodes;
 		
-		public float Scale
+		public Node<T> CurrentNode
 		{
 			get
 			{
-				return mScale;
-			}
-			set
-			{
-				mScale = value;
+				return currentNode;
 			}
 		}
-		
-		public float Alpha
+		protected void Initialize()
 		{
-			get
-			{
-				return mAlpha;
-			}
-			set
-			{
-				mAlpha = value;
-			}
+			nodeGraph.GraphChange += new Graph<T>.GraphChangeHandler(OnGraphChange);
 		}
 		
-		public float Mod
+		void OnDisable()
 		{
-			get
+			if (nodeGraph != null)
 			{
-				return mMod;
-			}
-			set
-			{
-				mMod = value;
-			}
+				nodeGraph.GraphChange -= new Graph<T>.GraphChangeHandler(OnGraphChange);
+			}			
 		}
 		
-		public Heuristic() {}
-		
-		public Heuristic(float scale, float alpha, float mod)
-		{
-			mScale = scale;
-			mAlpha = alpha;
-			mMod = mod;
-		}
-		
-		public abstract float Run(Node<T> node, Node<T> goal);
+		protected abstract void OnGraphChange();
 	}
 }

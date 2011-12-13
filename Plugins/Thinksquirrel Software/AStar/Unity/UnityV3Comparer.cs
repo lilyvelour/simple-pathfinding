@@ -1,4 +1,4 @@
-/// A* Pathfinding - Heuristic base class
+/// A* Pathfinding - Faster Vector3 comparer for Unity
 /// Copyright (c) 2011 Thinksquirrel Software, LLC
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining
@@ -17,60 +17,25 @@
 /// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
 /// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 /// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+using UnityEngine;
+using System.Collections.Generic;
 
-namespace ThinksquirrelSoftware.AStar
+namespace ThinksquirrelSoftware.AStar.Unity
 {
-	public abstract class Heuristic<T>
+	public class UnityV3Comparer : IEqualityComparer<Node<Vector3>>
 	{
-		private float mScale = 1;
-		private float mAlpha = 1;
-		private float mMod = 0;
-		
-		public float Scale
-		{
-			get
-			{
-				return mScale;
-			}
-			set
-			{
-				mScale = value;
-			}
-		}
-		
-		public float Alpha
-		{
-			get
-			{
-				return mAlpha;
-			}
-			set
-			{
-				mAlpha = value;
-			}
-		}
-		
-		public float Mod
-		{
-			get
-			{
-				return mMod;
-			}
-			set
-			{
-				mMod = value;
-			}
-		}
-		
-		public Heuristic() {}
-		
-		public Heuristic(float scale, float alpha, float mod)
-		{
-			mScale = scale;
-			mAlpha = alpha;
-			mMod = mod;
-		}
-		
-		public abstract float Run(Node<T> node, Node<T> goal);
+	    public bool Equals( Node<Vector3> x, Node<Vector3> y )
+	    {
+	        return x.Value == y.Value;
+	    }
+
+	    public int GetHashCode( Node<Vector3> obj )
+	    {
+	        return (
+	                  ( (int)( obj.Value.x * 10 ) ) << 16
+	                ^ ( (int)( obj.Value.y * 10 ) ) << 8
+	                ^ ( (int)( obj.Value.z * 10 ) )
+	              );
+	    }
 	}
 }

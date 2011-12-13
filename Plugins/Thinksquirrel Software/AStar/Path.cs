@@ -27,57 +27,64 @@ namespace ThinksquirrelSoftware.AStar
 	/// Represents a path of nodes.
 	public class Path<T>
 	{
-		private NodeList<T> mNodes = new NodeList<T>();
-		private NodeList<T> mParents = new NodeList<T>();
-		private Node<T> goal = new Node<T>();
+		private Dictionary<Node<T>, Node<T>> path = new Dictionary<Node<T>, Node<T>>();
+		private Node<T> goal;
 		
-		public Path(Node<T> goal)
+		public Node<T> Goal
 		{
-			this.goal = goal;
+			get
+			{
+				return goal;
+			}
+			set
+			{
+				goal = value;
+			}
 		}
 		
 		public void Add(Node<T> node, Node<T> parent)
 		{
-			mNodes.Add(node);
-			mParents.Add(parent);
+			path.Add(node, parent);
 		}
 		
 		public bool Contains(Node<T> node)
 		{
-			return mNodes.Contains(node);
+			return path.ContainsKey(node);
 		}
 		
+		public void Clear()
+		{
+			path.Clear();
+		}
 		public void SetParent(Node<T> node, Node<T> parent)
 		{
-			mParents[mNodes.IndexOf(node)] = parent;
+			path[node] = parent;
 		}
 		
 		public void Remove(Node<T> node)
 		{
-			int i = mNodes.IndexOf(node);
-			mNodes.RemoveAt(i);
-			mParents.RemoveAt(i);
+			path.Remove(node);
 		}
 		
 		public NodeList<T> Reconstruct()
 		{
+			// Reconstructed path
 			NodeList<T> reconstructedPath = new NodeList<T>();
 			
-			// Start the index at the end
-			int i = mNodes.IndexOf(goal);
-			while(i != -1)
-			{
-				// Add the node at the index
-				reconstructedPath.Insert(0, mNodes[i]);
-				
-				// Break if no parent (start node)
-				if (mParents[i] == null)
-					break;
-				
-				// Search for the node's parent and set that as the new index
-				i = mNodes.IndexOf(mParents[i]);
-			}
+			// Add the goal node
+			reconstructedPath.Add(goal);
 			
+			// Start the index at the end
+			Node<T> current;
+			path.TryGetValue(goal, out current);
+			while(current != null)
+			{
+				// Add the current node
+				reconstructedPath.Insert(0, current);
+				
+				// Search for the node's parent and set that as the new node
+				path.TryGetValue(current, out current);
+			}
 			return reconstructedPath;
 		}
 	}

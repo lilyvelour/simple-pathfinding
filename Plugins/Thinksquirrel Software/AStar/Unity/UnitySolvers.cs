@@ -1,4 +1,4 @@
-/// A* Pathfinding - Heuristic base class
+/// A* Pathfinding - Unity solvers
 /// Copyright (c) 2011 Thinksquirrel Software, LLC
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining
@@ -17,60 +17,33 @@
 /// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
 /// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 /// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+using UnityEngine;
+using ThinksquirrelSoftware.AStar;
 
-namespace ThinksquirrelSoftware.AStar
+namespace ThinksquirrelSoftware.AStar.Unity
 {
-	public abstract class Heuristic<T>
+	public class CrossProductSolverV3 : Solver<Vector3>
 	{
-		private float mScale = 1;
-		private float mAlpha = 1;
-		private float mMod = 0;
-		
-		public float Scale
+		public CrossProductSolverV3(Heuristic<Vector3> heuristic) : base(heuristic)
 		{
-			get
-			{
-				return mScale;
-			}
-			set
-			{
-				mScale = value;
-			}
+			comparer = new UnityV3Comparer();
 		}
 		
-		public float Alpha
+		private float CalculateMod(Node<Vector3> start, Node<Vector3> current, Node<Vector3> goal)
 		{
-			get
-			{
-				return mAlpha;
-			}
-			set
-			{
-				mAlpha = value;
-			}
+			if (current == null)
+				return 0;
+			
+			float c1 = Vector3.Cross(start.Value, goal.Value).magnitude;
+			float c2 = Vector3.Cross(current.Value, goal.Value).magnitude;
+
+			float cross = Mathf.Abs(c1 - c2);
+			return cross*0001f;
 		}
 		
-		public float Mod
+		protected override float DoHeuristic(Node<Vector3> node, Node<Vector3> goal)
 		{
-			get
-			{
-				return mMod;
-			}
-			set
-			{
-				mMod = value;
-			}
+			return HeuristicFunction.Run(node, goal) + CalculateMod(node, currentNode, goal);
 		}
-		
-		public Heuristic() {}
-		
-		public Heuristic(float scale, float alpha, float mod)
-		{
-			mScale = scale;
-			mAlpha = alpha;
-			mMod = mod;
-		}
-		
-		public abstract float Run(Node<T> node, Node<T> goal);
 	}
 }

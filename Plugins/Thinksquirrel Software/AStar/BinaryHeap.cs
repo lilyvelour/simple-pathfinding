@@ -29,16 +29,25 @@ namespace ThinksquirrelSoftware.AStar
 	// </summary>
 	public class BinaryHeap<T> : IEnumerable<T>
 	{
-		private List<IComparable> Keys = new List<IComparable>();
-	    private List<T> Items = new List<T>();
-	    public BinaryHeap() {}
+		private List<IComparable> mKeys = new List<IComparable>(100);
+	    private List<T> mItems = new List<T>(100);
+		private HashSet<T> mHash;
+	    public BinaryHeap()
+		{
+			mHash = new HashSet<T>();
+		}
+		
+		public BinaryHeap(IEqualityComparer<T> comparer)
+		{
+			mHash = new HashSet<T>(comparer);
+		}
 	
 	    /// <summary>
 	    /// Get a count of the number of items in the collection.
 	    /// </summary>
 	    public int Count
 	    {
-	        get { return Items.Count; }
+	        get { return mItems.Count; }
 	    }
 	
 	    /// <summary>
@@ -46,8 +55,9 @@ namespace ThinksquirrelSoftware.AStar
 	    /// </summary>
 	    public void Clear()
 	    {
-			Keys.Clear();
-	        Items.Clear();
+			mKeys.Clear();
+	        mItems.Clear();
+			mHash.Clear();
 	    }
 	
 	    /// <summary>
@@ -59,8 +69,9 @@ namespace ThinksquirrelSoftware.AStar
 	    /// </remarks>
 	    public void TrimExcess()
 	    {
-			Keys.TrimExcess();
-	        Items.TrimExcess();
+			mKeys.TrimExcess();
+	        mItems.TrimExcess();
+			mHash.TrimExcess();
 	    }
 	
 	    /// <summary>
@@ -70,16 +81,17 @@ namespace ThinksquirrelSoftware.AStar
 	    public void Insert(IComparable key, T newItem)
 	    {
 	        int i = Count;
-			Keys.Add(key);
-	        Items.Add(newItem);
-	        while (i > 0 && Keys[(i - 1) / 2].CompareTo(key) > 0)
+			mKeys.Add(key);
+	        mItems.Add(newItem);
+			mHash.Add(newItem);
+	        while (i > 0 && mKeys[((i - 1) / 2)].CompareTo(key) > 0)
 	        {
-				Keys[i] = Keys[(i - 1) / 2];
-	            Items[i] = Items[(i - 1) / 2];
+				mKeys[i] = mKeys[mKeys.Count - 1 - ((i - 1) / 2)];
+	            mItems[i] = mItems[mKeys.Count - 1 - ((i - 1) / 2)];
 	            i = (i - 1) / 2;
 	        }
-			Keys[i] = key;
-	        Items[i] = newItem;
+			mKeys[i] = key;
+	        mItems[i] = newItem;
 	    }
 		
 	    /// <summary>
@@ -88,11 +100,11 @@ namespace ThinksquirrelSoftware.AStar
 	    /// <returns>Returns the item at the root of the heap.</returns>
 	    public T Peek()
 	    {
-	        if (Items.Count == 0)
+	        if (mItems.Count == 0)
 	        {
 	            throw new InvalidOperationException("The heap is empty.");
 	        }
-	        return Items[0];
+	        return mItems[0];
 	    }
 
 	    /// <summary>
@@ -101,61 +113,51 @@ namespace ThinksquirrelSoftware.AStar
 	    /// <returns>Returns the item at the root of the heap.</returns>
 	    public T RemoveRoot()
 	    {
-	        if (Items.Count == 0)
+	        if (mItems.Count == 0)
 	        {
 	            throw new InvalidOperationException("The heap is empty.");
 	        }
 	        // Get the first item
-	        T rslt = Items[0];
+	        T rslt = mItems[0];
 	        // Get the last item and bubble it down.
-			IComparable tmpKey = Keys[Items.Count - 1];
-	        T tmp = Items[Items.Count - 1];
+			IComparable tmpKey = mKeys[mItems.Count - 1];
+	        T tmp = mItems[mItems.Count - 1];
 	
-			Keys.RemoveAt(Items.Count - 1);
-	        Items.RemoveAt(Items.Count - 1);
-	
-	        if (Items.Count > 0)
+			mKeys.RemoveAt(mItems.Count - 1);
+	        mItems.RemoveAt(mItems.Count - 1);
+			mHash.Remove(rslt);	
+	        if (mItems.Count > 0)
 	        {
 	            int i = 0;
-	            while (i < Items.Count / 2)
+	            while (i < mItems.Count / 2)
 	            {
 	                int j = (2 * i) + 1;
-	                if ((j < Items.Count - 1) && (Keys[j].CompareTo(Keys[j + 1]) > 0))
+	                if ((j < mItems.Count - 1) && (mKeys[j].CompareTo(mKeys[j + 1]) > 0))
 	                {
 	                    ++j;
 	                }
-	                if (Keys[j].CompareTo(tmpKey) >= 0)
+	                if (mKeys[j].CompareTo(tmpKey) >= 0)
 	                {
 	                    break;
 	                }
-					Keys[i] = Keys[j];
-	                Items[i] = Items[j];
+					mKeys[i] = mKeys[j];
+	                mItems[i] = mItems[j];
 	                i = j;
 	            }
-				Keys[i] = tmpKey;
-	            Items[i] = tmp;
+				mKeys[i] = tmpKey;
+	            mItems[i] = tmp;
 	        }
 	        return rslt;
 	    }
 		
 		public bool Contains(T item)
 		{
-			return Items.Contains(item);
-		}
-		
-		public IComparable GetKey(T item)
-		{
-			return Keys[Items.IndexOf(item)];
-		}
-		
-		public T[] ToArray()
-		{
-			return Items.ToArray();
+			return mHash.Contains(item);
 		}
 		
 	    IEnumerator<T> IEnumerable<T>.GetEnumerator()
 	    {
-	        foreach (var i in Items)
+	        foreach (var i in mItems)
 	        {
 	            yield return i;
 	        }
