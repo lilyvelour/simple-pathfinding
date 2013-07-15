@@ -1,4 +1,4 @@
-A--Pathfinding
+simple-pathfinding
 ==============
 
 Simple A* Pathfinding for Unity.
